@@ -7,9 +7,6 @@ using Content.Shared.MobState.Components;
 using Content.Shared.Popups;
 using Content.Shared.Verbs;
 using JetBrains.Annotations;
-using Robust.Shared.GameObjects;
-using Robust.Shared.IoC;
-using Robust.Shared.Localization;
 using Robust.Shared.Player;
 
 namespace Content.Server.Cuffs
@@ -76,8 +73,7 @@ namespace Content.Server.Cuffs
                 }
                 else
                 {
-                    // Uh... let it go through???
-                    // TODO CUFFABLE/STUN add UncuffAttemptEvent subscription to StunSystem
+                    // TODO Find a way for cuffable to check ActionBlockerSystem.CanInteract() without blocking itself
                 }
             }
             else
@@ -121,6 +117,7 @@ namespace Content.Server.Cuffs
             if (dirty)
             {
                 cuffable.CanStillInteract = handCount > cuffable.CuffedHandCount;
+                _actionBlockerSystem.UpdateCanMove(cuffable.Owner);
                 cuffable.CuffedStateChanged();
                 Dirty(cuffable);
             }

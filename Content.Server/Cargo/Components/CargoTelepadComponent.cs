@@ -1,5 +1,7 @@
+using Content.Server.Cargo.Systems;
 using Content.Shared.Cargo;
 using Content.Shared.Cargo.Components;
+using Content.Shared.MachineLinking;
 using Content.Shared.Sound;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
@@ -9,7 +11,7 @@ namespace Content.Server.Cargo.Components
     /// <summary>
     /// Handles teleporting in requested cargo after the specified delay.
     /// </summary>
-    [RegisterComponent, Friend(typeof(CargoSystem))]
+    [RegisterComponent, Access(typeof(CargoSystem))]
     public sealed class CargoTelepadComponent : SharedCargoTelepadComponent
     {
         [DataField("delay")]
@@ -19,6 +21,7 @@ namespace Content.Server.Cargo.Components
         /// How much time we've accumulated until next teleport.
         /// </summary>
         [ViewVariables]
+        [DataField("accumulator")]
         public float Accumulator = 0f;
 
         [ViewVariables]
@@ -34,5 +37,8 @@ namespace Content.Server.Cargo.Components
         /// </summary>
         [DataField("printerOutput", customTypeSerializer: typeof(PrototypeIdSerializer<EntityPrototype>))]
         public string PrinterOutput = "Paper";
+
+        [DataField("receiverPort", customTypeSerializer: typeof(PrototypeIdSerializer<ReceiverPortPrototype>))]
+        public string ReceiverPort = "OrderReceiver";
     }
 }

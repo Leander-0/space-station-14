@@ -1,16 +1,10 @@
 using Content.Shared.Sound;
 using Content.Shared.Whitelist;
-using Robust.Shared.Analyzers;
 using Robust.Shared.Audio;
 using Robust.Shared.Containers;
-using Robust.Shared.GameObjects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
-using Robust.Shared.Serialization.Manager.Attributes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
-using Robust.Shared.ViewVariables;
-using System;
-using System.Collections.Generic;
 
 namespace Content.Shared.Containers.ItemSlots
 {
@@ -19,7 +13,7 @@ namespace Content.Shared.Containers.ItemSlots
     ///     insert/eject interactions.
     /// </summary>
     [RegisterComponent]
-    [Friend(typeof(ItemSlotsSystem))]
+    [Access(typeof(ItemSlotsSystem))]
     public sealed class ItemSlotsComponent : Component
     {
         /// <summary>
@@ -66,7 +60,7 @@ namespace Content.Shared.Containers.ItemSlots
     ///     insert/eject sounds.
     /// </summary>
     [DataDefinition]
-    [Friend(typeof(ItemSlotsSystem))]
+    [Access(typeof(ItemSlotsSystem))]
     public sealed class ItemSlot
     {
         [DataField("whitelist")]
@@ -92,6 +86,7 @@ namespace Content.Shared.Containers.ItemSlots
         ///     of the currently held or currently inserted entity instead.
         /// </remarks>
         [DataField("name", readOnly: true)]
+        [Access(typeof(ItemSlotsSystem), Other = AccessPermissions.ReadWriteExecute)] // FIXME Friends
         public string Name = string.Empty;
 
         /// <summary>
@@ -103,6 +98,7 @@ namespace Content.Shared.Containers.ItemSlots
         ///     when mapping.
         /// </remarks>
         [DataField("startingItem", readOnly: true, customTypeSerializer: typeof(PrototypeIdSerializer<EntityPrototype>))]
+        [Access(typeof(ItemSlotsSystem), Other = AccessPermissions.ReadWriteExecute)] // FIXME Friends
         public string? StartingItem;
 
         /// <summary>
@@ -115,6 +111,13 @@ namespace Content.Shared.Containers.ItemSlots
         [DataField("locked", readOnly: true)]
         [ViewVariables(VVAccess.ReadWrite)]
         public bool Locked = false;
+
+        /// <summary>
+        ///     Whether the item slots system will attempt to insert item from the user's hands into this slot when interacted with.
+        ///     It doesn't block other insertion methods, like verbs.
+        /// </summary>
+        [DataField("insertOnInteract")]
+        public bool InsertOnInteract = true;
 
         /// <summary>
         ///     Whether the item slots system will attempt to eject this item to the user's hands when interacted with.

@@ -1,17 +1,9 @@
-using System;
-using System.Collections.Generic;
-using Content.Shared.Acts;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.FixedPoint;
-using Content.Shared.Radiation;
-using Robust.Shared.Analyzers;
-using Robust.Shared.GameObjects;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization;
-using Robust.Shared.Serialization.Manager.Attributes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.List;
-using Robust.Shared.ViewVariables;
 
 namespace Content.Shared.Damage
 {
@@ -24,14 +16,15 @@ namespace Content.Shared.Damage
     /// </remarks>
     [RegisterComponent]
     [NetworkedComponent()]
-    [Friend(typeof(DamageableSystem))]
-    public sealed class DamageableComponent : Component, IRadiationAct
+    [Access(typeof(DamageableSystem))]
+    public sealed class DamageableComponent : Component
     {
         /// <summary>
         ///     This <see cref="DamageContainerPrototype"/> specifies what damage types are supported by this component.
         ///     If null, all damage types will be supported.
         /// </summary>
         [DataField("damageContainer", customTypeSerializer: typeof(PrototypeIdSerializer<DamageContainerPrototype>))]
+        [Access(typeof(DamageableSystem), Other = AccessPermissions.ReadExecute)] // FIXME Friends
         public string? DamageContainerID;
 
         /// <summary>
@@ -54,6 +47,7 @@ namespace Content.Shared.Damage
         /// </remarks>
         [DataField("damage")]
         [ViewVariables(VVAccess.ReadWrite)]
+        [Access(typeof(DamageableSystem), Other = AccessPermissions.ReadExecute)] // FIXME Friends
         public DamageSpecifier Damage = new();
 
         /// <summary>
@@ -68,7 +62,9 @@ namespace Content.Shared.Damage
         /// <summary>
         ///     The sum of all damages in the DamageableComponent.
         /// </summary>
-        [ViewVariables] public FixedPoint2 TotalDamage;
+        [ViewVariables]
+        [Access(typeof(DamageableSystem), Other = AccessPermissions.ReadExecute)] // FIXME Friends
+        public FixedPoint2 TotalDamage;
 
         // Really these shouldn't be here. OnExplosion() and RadiationAct() should be handled elsewhere.
         [ViewVariables]
@@ -77,21 +73,6 @@ namespace Content.Shared.Damage
         [ViewVariables]
         [DataField("explosionDamageTypes", customTypeSerializer: typeof(PrototypeIdListSerializer<DamageTypePrototype>))]
         public List<string> ExplosionDamageTypeIDs = new() { "Piercing", "Heat" };
-
-        // TODO RADIATION Remove this.
-        void IRadiationAct.RadiationAct(float frameTime, SharedRadiationPulseComponent radiation)
-        {
-            var damageValue = FixedPoint2.New(MathF.Max((frameTime * radiation.RadsPerSecond), 1));
-
-            // Radiation should really just be a damage group instead of a list of types.
-            DamageSpecifier damage = new();
-            foreach (var typeID in RadiationDamageTypeIDs)
-            {
-                damage.DamageDict.Add(typeID, damageValue);
-            }
-
-            EntitySystem.Get<DamageableSystem>().TryChangeDamage(Owner, damage);
-        }
     }
 
     [Serializable, NetSerializable]

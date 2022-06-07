@@ -1,9 +1,4 @@
-using System;
-using Robust.Shared.Analyzers;
-using Robust.Shared.GameObjects;
 using Robust.Shared.GameStates;
-using Robust.Shared.IoC;
-using Robust.Shared.Log;
 using Robust.Shared.Map;
 using Robust.Shared.Physics.Dynamics.Joints;
 using Robust.Shared.Serialization;
@@ -12,7 +7,7 @@ namespace Content.Shared.Pulling.Components
 {
     // Before you try to add another type than SharedPullingStateManagementSystem, consider the can of worms you may be opening!
     [NetworkedComponent()]
-    [Friend(typeof(SharedPullingStateManagementSystem))]
+    [Access(typeof(SharedPullingStateManagementSystem))]
     [RegisterComponent]
     public sealed class SharedPullableComponent : Component
     {
@@ -31,6 +26,7 @@ namespace Content.Shared.Pulling.Components
 
         public bool BeingPulled => Puller != null;
 
+        [Access(typeof(SharedPullingStateManagementSystem), Other = AccessPermissions.ReadExecute)] // FIXME Friends
         public EntityCoordinates? MovingTo { get; set; }
 
         public override ComponentState GetComponentState()

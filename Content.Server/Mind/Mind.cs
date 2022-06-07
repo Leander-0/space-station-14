@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Server.GameTicking;
@@ -11,12 +9,8 @@ using Content.Server.Roles;
 using Content.Shared.MobState.Components;
 using Robust.Server.GameObjects;
 using Robust.Server.Player;
-using Robust.Shared.GameObjects;
-using Robust.Shared.IoC;
-using Robust.Shared.Log;
 using Robust.Shared.Network;
 using Robust.Shared.Utility;
-using Robust.Shared.ViewVariables;
 
 namespace Content.Server.Mind
 {
@@ -78,7 +72,8 @@ namespace Content.Server.Mind
         ///     The time of death for this Mind.
         ///     Can be null - will be null if the Mind is not considered "dead".
         /// </summary>
-        [ViewVariables] public TimeSpan? TimeOfDeath { get; set; } = null;
+        [ViewVariables]
+        public TimeSpan? TimeOfDeath { get; set; } = null;
 
         /// <summary>
         ///     The component currently owned by this mind.
@@ -270,6 +265,13 @@ namespace Content.Server.Mind
         /// </exception>
         public void TransferTo(EntityUid? entity, bool ghostCheckOverride = false)
         {
+            // Looks like caller just wants us to go back to normal.
+            if (entity == OwnedEntity)
+            {
+                UnVisit();
+                return;
+            }
+
             var entMan = IoCManager.Resolve<IEntityManager>();
 
             MindComponent? component = null;
@@ -312,11 +314,11 @@ namespace Content.Server.Mind
                     || !entMan.TryGetComponent(VisitingEntity!, out GhostComponent? ghostComponent) // visiting entity is not a Ghost
                     || !ghostComponent.CanReturnToBody))  // it is a ghost, but cannot return to body anyway, so it's okay
             {
-                VisitingEntity = default;
+                RemoveVisitingEntity();
             }
 
             // Player is CURRENTLY connected.
-            if (Session != null && !alreadyAttached && VisitingEntity == default)
+            if (Session != null && !alreadyAttached && VisitingEntity == null)
             {
                 Session.AttachToEntity(entity);
                 Logger.Info($"Session {Session.Name} transferred to entity {entity}.");
@@ -376,17 +378,26 @@ namespace Content.Server.Mind
             Logger.Info($"Session {Session?.Name} visiting entity {entity}.");
         }
 
+        /// <summary>
+        /// Returns the mind to its original entity.
+        /// </summary>
         public void UnVisit()
         {
-            if (VisitingEntity == null)
-            {
-                return;
-            }
-
             Session?.AttachToEntity(OwnedEntity);
+            RemoveVisitingEntity();
+        }
+
+        /// <summary>
+        /// Cleans up the VisitingEntity.
+        /// </summary>
+        private void RemoveVisitingEntity()
+        {
+            if (VisitingEntity == null)
+                return;
+
             var oldVisitingEnt = VisitingEntity.Value;
             // Null this before removing the component to avoid any infinite loops.
-            VisitingEntity = default;
+            VisitingEntity = null;
 
             DebugTools.AssertNotNull(oldVisitingEnt);
 

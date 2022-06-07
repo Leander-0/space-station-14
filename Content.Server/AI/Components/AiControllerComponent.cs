@@ -1,14 +1,9 @@
-﻿using Content.Server.AI.EntitySystems;
-using Content.Server.GameTicking;
+using Content.Server.AI.EntitySystems;
+using Content.Server.Station.Systems;
 using Content.Shared.Movement.Components;
 using Content.Shared.Roles;
-using Robust.Shared.GameObjects;
-using Robust.Shared.IoC;
 using Robust.Shared.Map;
-using Robust.Shared.Maths;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.Manager.Attributes;
-using Robust.Shared.ViewVariables;
 
 namespace Content.Server.AI.Components
 {
@@ -18,6 +13,8 @@ namespace Content.Server.AI.Components
     public class AiControllerComponent : Component, IMobMoverComponent, IMoverComponent
     {
         [DataField("logic")] private float _visionRadius = 8.0f;
+
+        public bool CanMove { get; set; } = true;
 
         // TODO: Need to ECS a lot more of the AI first before we can ECS this
         /// <summary>
@@ -43,10 +40,6 @@ namespace Content.Server.AI.Components
         private bool _awake = true;
 
         [ViewVariables(VVAccess.ReadWrite)]
-        [DataField("startingGear")]
-        public string? StartingGearPrototype { get; set; }
-
-        [ViewVariables(VVAccess.ReadWrite)]
         public float VisionRadius
         {
             get => _visionRadius;
@@ -60,20 +53,6 @@ namespace Content.Server.AI.Components
 
             // This component requires a physics component.
             Owner.EnsureComponent<PhysicsComponent>();
-        }
-
-        protected override void Startup()
-        {
-            base.Startup();
-
-            if (StartingGearPrototype != null)
-            {
-                var gameTicker = EntitySystem.Get<GameTicker>();
-                var protoManager = IoCManager.Resolve<IPrototypeManager>();
-
-                var startingGear = protoManager.Index<StartingGearPrototype>(StartingGearPrototype);
-                gameTicker.EquipStartingGear(Owner, startingGear, null);
-            }
         }
 
         /// <summary>
